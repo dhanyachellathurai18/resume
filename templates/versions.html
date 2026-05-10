@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Versions — ResumeAI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --ink: #0d0d0d;
+    --cream: #f5f0e8;
+    --cream-dim: rgba(245,240,232,0.65);
+    --gold: #c9a84c;
+    --gold-light: #e8c96e;
+    --muted: #6b6560;
+    --surface: #1a1814;
+    --surface2: #211f1a;
+    --border: rgba(201,168,76,0.18);
+    --danger: #c94c4c;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--cream);
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 32px 24px;
+  }
+
+  .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 48px;
+  }
+
+  .brand span {
+    color: var(--gold);
+  }
+
+  .nav-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 24px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    color: var(--cream-dim);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 2px;
+    margin-bottom: 2px;
+    transition: 0.2s;
+  }
+
+  .nav-link:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--cream);
+  }
+
+  .nav-link.active {
+    background: rgba(201,168,76,0.12);
+    color: var(--gold);
+  }
+
+  .main {
+    margin-left: 240px;
+    padding: 40px 48px;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+  }
+
+  .btn {
+    padding: 11px 20px;
+    background: var(--gold);
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  .tab {
+    padding: 8px 18px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .tab.active {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .table-wrap {
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead {
+    background: var(--surface);
+  }
+
+  th, td {
+    padding: 14px 18px;
+    text-align: left;
+  }
+
+  th {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  tbody tr {
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .name {
+    color: var(--cream);
+    font-weight: 500;
+  }
+
+  .badge {
+    padding: 4px 10px;
+    font-size: 10px;
+    border: 1px solid;
+  }
+
+  .badge-gold {
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  .badge-green {
+    color: #4caf7d;
+    border-color: #4caf7d;
+  }
+
+  .badge-yellow {
+    color: #e8c060;
+    border-color: #e8c060;
+  }
+
+  .badge-red {
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+
+  .badge-auto {
+    color: var(--muted);
+    border-color: var(--muted);
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-link {
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    color: var(--cream-dim);
+    text-decoration: none;
+    font-size: 11px;
+  }
+
+  .action-link:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .danger {
+    color: var(--danger);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 0;
+    color: var(--muted);
+  }
+</style>
+</head>
+
+<body>
+
+<aside class="sidebar">
+  <div class="brand">Resume<span>AI</span></div>
+
+  <p class="nav-label">Main</p>
+
+  <a href="/dashboard" class="nav-link">⬡ Dashboard</a>
+  <a href="/resume" class="nav-link">✦ Build Resume</a>
+  <a href="/versions" class="nav-link active">◈ Versions</a>
+
+  <p class="nav-label">Account</p>
+
+  <a href="/settings" class="nav-link">◇ Settings</a>
+  <a href="/logout" class="nav-link">⊙ Logout</a>
+</aside>
+
+<main class="main">
+
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">History</p>
+      <h1>Version Snapshots</h1>
+    </div>
+
+    <a href="/resume" class="btn">✦ New Resume</a>
+  </div>
+
+  {% if resume_data %}
+
+  <div class="tabs">
+    <button class="tab active" onclick="filterVersions('all', this)">All</button>
+    <button class="tab" onclick="filterVersions('manual', this)">Manual</button>
+    <button class="tab" onclick="filterVersions('auto', this)">Auto</button>
+  </div>
+
+  <div class="table-wrap">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Label</th>
+          <th>Score</th>
+          <th>Rank</th>
+          <th>Type</th>
+          <th>Saved At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody id="versionsTable">
+
+        {% for resume, rank in resume_data %}
+
+        <tr data-type="{{ 'auto' if resume.is_autosave else 'manual' }}">
+
+          <td>v{{ resume.version_number }}</td>
+
+          <td class="name">
+            {{ resume.name or '—' }}
+          </td>
+
+          <td>
+            {{ resume.label or '—' }}
+          </td>
+
+          <td>
+            {{ resume.score }}
+          </td>
+
+          <td>
+
+            {% if rank == 'Excellent' %}
+              <span class="badge badge-gold">{{ rank }}</span>
+
+            {% elif rank == 'Good' %}
+              <span class="badge badge-green">{{ rank }}</span>
+
+            {% elif rank == 'Average' %}
+              <span class="badge badge-yellow">{{ rank }}</span>
+
+            {% else %}
+              <span class="badge badge-red">{{ rank }}</span>
+
+            {% endif %}
+
+          </td>
+
+          <td>
+
+            {% if resume.is_autosave %}
+              <span class="badge badge-auto">Auto</span>
+            {% else %}
+              <span class="badge badge-gold">Manual</span>
+            {% endif %}
+
+          </td>
+
+          <td>
+            {{ resume.created_at or '—' }}
+          </td>
+
+          <td>
+
+            <div class="actions">
+
+              <a href="/preview/{{ resume.id }}" class="action-link">
+                Preview
+              </a>
+
+              <a href="/pdf/{{ resume.id }}" class="action-link">
+                PDF
+              </a>
+
+              <a href="/delete/{{ resume.id }}"
+                 class="action-link danger"
+                 onclick="return confirm('Delete version {{ resume.version_number }}?')">
+
+                 Delete
+
+              </a>
+
+            </div>
+
+          </td>
+
+        </tr>
+
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  {% else %}
+
+  <div class="empty-state">
+    <h2>No versions yet</h2>
+
+    <p>
+      Build your first resume and versions will appear here automatically.
+    </p>
+
+    <a href="/resume" class="btn">
+      ✦ Build Resume
+    </a>
+  </div>
+
+  {% endif %}
+
+</main>
+
+<script>
+function filterVersions(type, btn) {
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+
+  btn.classList.add('active');
+
+  document.querySelectorAll('#versionsTable tr').forEach(row => {
+
+    if (type === 'all' || row.dataset.type === type) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+
+  });
+
+}
+</script>
+
+</body>
+</html>

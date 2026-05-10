@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Build Resume — ResumeAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0d0d0d;
+    --cream: #f5f0e8;
+    --cream-dim: rgba(245,240,232,0.65);
+    --gold: #c9a84c;
+    --gold-light: #e8c96e;
+    --muted: #6b6560;
+    --surface: #1a1814;
+    --surface2: #211f1a;
+    --border: rgba(201,168,76,0.18);
+    --success: #4caf7d;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--cream);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    width: 240px; height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 32px 24px; z-index: 100;
+  }
+
+  .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 900;
+    color: var(--cream); margin-bottom: 48px;
+  }
+
+  .brand span { color: var(--gold); }
+
+  .nav-label {
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px; margin-top: 24px;
+  }
+
+  .nav-link {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    color: var(--cream-dim);
+    text-decoration: none;
+    font-size: 14px; border-radius: 2px;
+    transition: background 0.15s, color 0.15s; margin-bottom: 2px;
+  }
+
+  .nav-link:hover { background: rgba(255,255,255,0.05); color: var(--cream); }
+  .nav-link.active { background: rgba(201,168,76,0.12); color: var(--gold); font-weight: 500; }
+
+  /* Main */
+  .main {
+    margin-left: 240px;
+    padding: 40px 48px;
+    flex: 1;
+    max-width: 980px;
+  }
+
+  .page-header { margin-bottom: 36px; }
+
+  .eyebrow {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem; font-weight: 900; color: var(--cream);
+  }
+
+  /* Autosave bar */
+  .autosave-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 12px 20px;
+    margin-bottom: 28px;
+    font-size: 13px;
+  }
+
+  .autosave-status {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--muted);
+  }
+
+  .autosave-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+
+  .autosave-dot.saved { background: var(--success); }
+  .autosave-dot.saving { background: var(--gold); animation: pulse 0.8s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+
+  .autosave-timer { color: var(--gold); font-size: 12px; font-weight: 500; }
+
+  .save-now-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--cream-dim); padding: 6px 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s;
+  }
+
+  .save-now-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* Form sections */
+  .form-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .section-number {
+    width: 26px; height: 26px;
+    border: 1px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 14px; font-weight: 600; color: var(--cream);
+    letter-spacing: 0.04em;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-1 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+  .field { display: flex; flex-direction: column; }
+
+  label {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 7px;
+  }
+
+  input, textarea, select {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    width: 100%;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.04);
+  }
+
+  input::placeholder, textarea::placeholder { color: rgba(245,240,232,0.2); }
+
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+  select { cursor: pointer; }
+  select option { background: #1a1814; color: var(--cream); }
+
+  /* Photo upload */
+  .photo-upload {
+    display: flex; align-items: center; gap: 20px;
+  }
+
+  .photo-preview {
+    width: 80px; height: 80px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; overflow: hidden; flex-shrink: 0;
+  }
+
+  .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+  .photo-label {
+    font-size: 13px; color: var(--cream-dim); line-height: 1.5;
+  }
+
+  input[type=file] {
+    padding: 8px; font-size: 12px; color: var(--muted);
+    border-style: dashed; background: transparent;
+  }
+
+  /* Submit */
+  .submit-row {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 28px;
+  }
+
+  .btn-primary {
+    flex: 1; padding: 15px;
+    background: var(--gold); color: var(--ink);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    border: none; cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+  .btn-secondary {
+    padding: 15px 24px;
+    background: none; border: 1px solid var(--border);
+    color: var(--cream-dim);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* Versions panel */
+  .versions-panel {
+    position: fixed;
+    top: 0; right: -360px;
+    width: 360px; height: 100vh;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 200;
+    transition: right 0.3s cubic-bezier(0.22,1,0.36,1);
+    display: flex; flex-direction: column;
+    padding: 32px 28px;
+    overflow-y: auto;
+  }
+
+  .versions-panel.open { right: 0; }
+
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; font-weight: 700; color: var(--cream);
+  }
+
+  .close-panel {
+    background: none; border: none;
+    color: var(--muted); font-size: 22px; cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .close-panel:hover { color: var(--cream); }
+
+  .version-item {
+    padding: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .version-item:hover { border-color: rgba(201,168,76,0.4); background: rgba(201,168,76,0.04); }
+
+  .version-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .version-num {
+    font-size: 11px; font-weight: 600; color: var(--gold);
+    letter-spacing: 0.1em;
+  }
+
+  .version-time { font-size: 11px; color: var(--muted); }
+
+  .version-label { font-size: 13px; color: var(--cream-dim); }
+
+  .version-restore {
+    font-size: 11px; color: var(--gold); margin-top: 8px;
+    letter-spacing: 0.05em; display: inline-block;
+  }
+
+  .no-versions {
+    font-size: 14px; color: var(--muted); text-align: center;
+    padding: 40px 0;
+    line-height: 1.6;
+  }
+
+  /* Overlay */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 150;
+  }
+
+  .overlay.show { display: block; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 12px 24px; font-size: 13px; color: var(--cream-dim);
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast span { color: var(--gold); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">Resume<span>AI</span></div>
+  <p class="nav-label">Main</p>
+  <a href="/dashboard" class="nav-link"><span>⬡</span> Dashboard</a>
+  <a href="/resume" class="nav-link active"><span>✦</span> Build Resume</a>
+  <a href="/versions" class="nav-link"><span>◈</span> Versions</a>
+  <p class="nav-label">Account</p>
+  <a href="/settings" class="nav-link"><span>◇</span> Settings</a>
+  <a href="/logout" class="nav-link"><span>⊙</span> Logout</a>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <p class="eyebrow">AI Resume Builder</p>
+    <h1>Build Your Resume</h1>
+  </div>
+
+  <!-- Autosave bar -->
+  <div class="autosave-bar">
+    <div class="autosave-status">
+      <div class="autosave-dot" id="autosaveDot"></div>
+      <span id="autosaveText">Auto-saving every 5 minutes</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <span class="autosave-timer" id="nextSaveTimer"></span>
+      <button class="save-now-btn" onclick="saveVersion(true)">Save Now</button>
+      <button class="save-now-btn" onclick="openVersions()">◈ View Versions</button>
+    </div>
+  </div>
+
+  <form method="POST" action="/resume" enctype="multipart/form-data" id="resumeForm">
+
+    <!-- Section 1: Basic Info -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-number">01</div>
+        <span class="section-title">Personal Information</span>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" name="name" id="f_name" placeholder="John Doe">
+        </div>
+        <div class="field">
+          <label>Job Title</label>
+          <input type="text" name="jobtitle" id="f_jobtitle" placeholder="Senior Software Engineer">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" id="f_email" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input type="text" name="phone" id="f_phone" placeholder="+1 (555) 000-0000">
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <input type="text" name="location" id="f_location" placeholder="New York, NY">
+        </div>
+        <div class="field">
+          <label>LinkedIn URL</label>
+          <input type="text" name="linkedin" id="f_linkedin" placeholder="linkedin.com/in/yourprofile">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Photo & Template -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-number">02</div>
+        <span class="section-title">Photo & Template</span>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Profile Photo</label>
+          <div class="photo-upload">
+            <div class="photo-preview" id="photoPreview">👤</div>
+            <div>
+              <p class="photo-label">Upload a professional photo. Square images work best.</p>
+              <input type="file" name="photo" accept="image/*" onchange="previewPhoto(this)">
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Resume Template</label>
+          <select name="template" id="f_template">
+            <option>AI Modern</option>
+            <option>Cyber Glass</option>
+            <option>Dark Pro</option>
+            <option>Editorial Clean</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Summary -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-number">03</div>
+        <span class="section-title">Career Summary</span>
+      </div>
+      <div class="field">
+        <label>Objective / Professional Summary</label>
+        <textarea name="objective" id="f_objective" rows="4" placeholder="A brief 2-3 sentence summary of your career goals and key strengths..."></textarea>
+      </div>
+    </div>
+
+    <!-- Section 4: Skills -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-number">04</div>
+        <span class="section-title">Skills</span>
+      </div>
+      <div class="field">
+        <label>Technical & Soft Skills</label>
+        <textarea name="skills" id="f_skills" rows="3" placeholder="Python, JavaScript, React, Node.js, SQL, Team Leadership, Agile..."></textarea>
+      </div>
+    </div>
+
+    <!-- Section 5: Education -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-number">05</div>
+        <span class="section-title">Education</span>
+      </div>
+      <div class="field">
+        <label>Education History</label>
+        <textarea name="education" id="f_education" rows="4" placeholder="B.S. Computer Science — MIT, 2018–2022&#10;GPA: 3.9 | Dean's List all semesters"></textarea>
+      </div>
+    </div>
+
+    <!-- Section 6: Experience -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-number">06</div>
+        <span class="section-title">Work Experience</span>
+      </div>
+      <div class="field">
+        <label>Professional Experience</label>
+        <textarea name="experience" id="f_experience" rows="6" placeholder="Senior Engineer — Acme Corp, 2022–Present&#10;• Led a team of 5 to build a real-time analytics platform...&#10;&#10;Junior Developer — StartupXYZ, 2020–2022&#10;• Contributed to front-end development using React..."></textarea>
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <button type="submit" class="btn-primary">✦ Generate AI Resume</button>
+      <button type="button" class="btn-secondary" onclick="saveVersion(true)">⬡ Save Draft</button>
+    </div>
+
+  </form>
+</main>
+
+<!-- Versions Panel -->
+<div class="overlay" id="overlay" onclick="closeVersions()"></div>
+<div class="versions-panel" id="versionsPanel">
+  <div class="panel-header">
+    <span class="panel-title">Version History</span>
+    <button class="close-panel" onclick="closeVersions()">×</button>
+  </div>
+  <div id="versionsList">
+    <p class="no-versions">No versions saved yet.<br>Versions save automatically<br>every 5 minutes.</p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><span id="toastText">Saved</span></div>
+
+<script>
+  const FIELDS = ['name','jobtitle','email','phone','location','linkedin','objective','skills','education','experience','template'];
+  const STORAGE_KEY = 'resumeDraft';
+  const VERSIONS_KEY = 'resumeVersions';
+  const SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+  let nextSaveAt = Date.now() + SAVE_INTERVAL;
+  let versionCounter = 1;
+
+  // Load existing draft
+  function loadDraft() {
+    const draft = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    FIELDS.forEach(id => {
+      const el = document.getElementById('f_' + id);
+      if (el && draft[id] !== undefined) el.value = draft[id];
+    });
+    const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
+    if (versions.length > 0) versionCounter = versions[versions.length - 1].version + 1;
+  }
+
+  // Collect form data
+  function collectData() {
+    const data = {};
+    FIELDS.forEach(id => {
+      const el = document.getElementById('f_' + id);
+      if (el) data[id] = el.value;
+    });
+    return data;
+  }
+
+  // Save current draft silently
+  function saveDraft() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(collectData()));
+  }
+
+  // Save a named version snapshot
+  function saveVersion(manual = false) {
+    const data = collectData();
+    const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
+    const name = data.name ? data.name.trim() : 'Draft';
+    const version = {
+      version: versionCounter++,
+      label: name ? `${name}'s Resume` : 'Draft',
+      timestamp: Date.now(),
+      data: data,
+      manual: manual
+    };
+    versions.push(version);
+    // Keep last 30 versions
+    if (versions.length > 30) versions.splice(0, versions.length - 30);
+    localStorage.setItem(VERSIONS_KEY, JSON.stringify(versions));
+    saveDraft();
+
+    // Update UI
+    showAutosaveDot('saved');
+    showToast(manual ? '✦ Version saved manually' : '⬡ Auto-saved');
+    renderVersionsList();
+    nextSaveAt = Date.now() + SAVE_INTERVAL;
+  }
+
+  function showAutosaveDot(state) {
+    const dot = document.getElementById('autosaveDot');
+    const text = document.getElementById('autosaveText');
+    dot.className = 'autosave-dot ' + state;
+    if (state === 'saving') text.textContent = 'Saving…';
+    else if (state === 'saved') text.textContent = 'Saved successfully';
+    else text.textContent = 'Auto-saving every 5 minutes';
+    if (state === 'saved') setTimeout(() => {
+      dot.className = 'autosave-dot';
+      text.textContent = 'Auto-saving every 5 minutes';
+    }, 2500);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastText').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function renderVersionsList() {
+    const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
+    const container = document.getElementById('versionsList');
+    if (versions.length === 0) {
+      container.innerHTML = '<p class="no-versions">No versions saved yet.<br>Versions save automatically<br>every 5 minutes.</p>';
+      return;
+    }
+    container.innerHTML = [...versions].reverse().map(v => `
+      <div class="version-item" onclick="restoreVersion(${v.version})">
+        <div class="version-meta">
+          <span class="version-num">Version ${v.version} ${v.manual ? '· Manual' : '· Auto'}</span>
+          <span class="version-time">${new Date(v.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+        </div>
+        <div class="version-label">${v.label}</div>
+        <div class="version-time">${new Date(v.timestamp).toLocaleDateString()}</div>
+        <span class="version-restore">↩ Click to restore</span>
+      </div>
+    `).join('');
+  }
+
+  function restoreVersion(num) {
+    const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
+    const v = versions.find(x => x.version === num);
+    if (!v) return;
+    FIELDS.forEach(id => {
+      const el = document.getElementById('f_' + id);
+      if (el && v.data[id] !== undefined) el.value = v.data[id];
+    });
+    closeVersions();
+    showToast(`↩ Restored version ${num}`);
+  }
+
+  function openVersions() {
+    renderVersionsList();
+    document.getElementById('versionsPanel').classList.add('open');
+    document.getElementById('overlay').classList.add('show');
+  }
+
+  function closeVersions() {
+    document.getElementById('versionsPanel').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  function previewPhoto(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.getElementById('photoPreview');
+        preview.innerHTML = `<img src="${e.target.result}" alt="Photo preview">`;
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // Countdown timer update
+  function updateTimer() {
+    const remaining = Math.max(0, nextSaveAt - Date.now());
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    document.getElementById('nextSaveTimer').textContent =
+      `Next auto-save in ${mins}:${secs.toString().padStart(2,'0')}`;
+  }
+
+  // Auto-save every 5 minutes
+  setInterval(() => {
+    const dot = document.getElementById('autosaveDot');
+    dot.className = 'autosave-dot saving';
+    setTimeout(() => saveVersion(false), 600);
+  }, SAVE_INTERVAL);
+
+  // Timer tick
+  setInterval(updateTimer, 1000);
+
+  // Save draft on any input change
+  document.querySelectorAll('input, textarea, select').forEach(el => {
+    el.addEventListener('input', () => saveDraft());
+  });
+
+  // Init
+  loadDraft();
+  updateTimer();
+</script>
+</body>
+</html>

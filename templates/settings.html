@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Settings — ResumeAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0d0d0d; --cream: #f5f0e8; --cream-dim: rgba(245,240,232,0.65);
+    --gold: #c9a84c; --gold-light: #e8c96e; --muted: #6b6560;
+    --surface: #1a1814; --surface2: #211f1a; --border: rgba(201,168,76,0.18);
+    --border-soft: rgba(255,255,255,0.07); --danger: #c94c4c; --success: #4caf7d;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--ink); color: var(--cream); min-height: 100vh; display: flex; }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 32px 24px; z-index: 100;
+  }
+  .brand { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; color: var(--cream); margin-bottom: 48px; }
+  .brand span { color: var(--gold); }
+  .nav-label { font-size: 9px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; margin-top: 24px; }
+  .nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--cream-dim); text-decoration: none; font-size: 14px; border-radius: 2px; transition: background 0.15s, color 0.15s; margin-bottom: 2px; }
+  .nav-link:hover { background: rgba(255,255,255,0.05); color: var(--cream); }
+  .nav-link.active { background: rgba(201,168,76,0.12); color: var(--gold); font-weight: 500; }
+
+  .main { margin-left: 240px; display: flex; flex: 1; min-height: 100vh; }
+
+  /* Settings side nav */
+  .settings-nav {
+    width: 210px; flex-shrink: 0;
+    padding: 48px 0 80px 36px;
+    border-right: 1px solid var(--border-soft);
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .settings-nav-title { font-size: 9px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+  .snav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    color: var(--cream-dim); font-size: 13px; cursor: pointer;
+    border: none; border-left: 2px solid transparent;
+    background: none; width: 100%; text-align: left;
+    transition: all 0.15s; margin-bottom: 2px; padding-left: 0;
+  }
+  .snav-item:hover { color: var(--cream); }
+  .snav-item.active { color: var(--gold); border-left-color: var(--gold); padding-left: 10px; font-weight: 500; }
+  .snav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+
+  /* Main content */
+  .settings-content { flex: 1; padding: 48px 48px 100px; max-width: 680px; }
+  .page-eyebrow { font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; color: var(--cream); margin-bottom: 32px; }
+
+  /* Sections */
+  .settings-section { display: none; animation: fadeIn 0.2s ease; }
+  .settings-section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Panel */
+  .panel { background: var(--surface); border: 1px solid var(--border); margin-bottom: 16px; overflow: hidden; }
+  .panel-header { padding: 18px 24px 14px; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; gap: 10px; }
+  .panel-icon { font-size: 16px; }
+  .panel-title { font-size: 13px; font-weight: 600; color: var(--cream); }
+  .panel-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .panel-body { padding: 20px 24px; }
+
+  /* Form row */
+  .form-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--border-soft); gap: 16px; }
+  .form-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .form-row:first-child { padding-top: 0; }
+  .form-row.col { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .row-label { font-size: 13px; color: var(--cream-dim); }
+  .row-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* Toggle */
+  .toggle { position: relative; width: 42px; height: 23px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+  .toggle-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%; background: var(--muted); transition: transform 0.2s, background 0.2s; }
+  .toggle input:checked + .toggle-track { background: rgba(201,168,76,0.18); border-color: var(--gold); }
+  .toggle input:checked + .toggle-track::after { transform: translateX(19px); background: var(--gold); }
+
+  /* Select */
+  select { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 9px 30px 9px 12px; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6560'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; min-width: 155px; transition: border-color 0.2s; }
+  select:focus { border-color: var(--gold); }
+  select option { background: #1a1814; }
+
+  /* Text input */
+  input[type=text], input[type=email], input[type=password] { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 9px 14px; outline: none; width: 100%; transition: border-color 0.2s; }
+  input[type=text]:focus, input[type=email]:focus, input[type=password]:focus { border-color: var(--gold); background: rgba(201,168,76,0.03); }
+  input::placeholder { color: rgba(245,240,232,0.2); }
+
+  /* Radio buttons */
+  .radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .radio-btn { padding: 7px 16px; border: 1px solid var(--border); background: none; color: var(--cream-dim); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+  .radio-btn.selected { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+  .radio-btn:hover:not(.selected) { border-color: rgba(201,168,76,0.3); color: var(--cream-dim); }
+
+  /* Color swatches */
+  .color-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s; position: relative; flex-shrink: 0; }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.selected { border-color: var(--cream); transform: scale(1.1); }
+  .color-swatch.selected::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); }
+
+  /* Font buttons */
+  .font-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .font-btn { padding: 7px 14px; border: 1px solid var(--border); background: none; color: var(--cream-dim); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .font-btn.selected { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+  .font-btn:hover:not(.selected) { border-color: rgba(201,168,76,0.3); color: var(--cream); }
+
+  /* Range */
+  .range-row { display: flex; align-items: center; gap: 14px; width: 220px; }
+  input[type=range] { flex: 1; accent-color: var(--gold); height: 4px; cursor: pointer; }
+  .range-val { font-size: 13px; color: var(--gold); font-weight: 600; min-width: 32px; text-align: right; }
+
+  /* Template grid */
+  .template-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .template-card { border: 1px solid var(--border); cursor: pointer; overflow: hidden; transition: border-color 0.2s, transform 0.15s; position: relative; }
+  .template-card:hover { border-color: rgba(201,168,76,0.4); transform: translateY(-2px); }
+  .template-card.selected { border-color: var(--gold); }
+  .template-card.selected::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--gold); }
+  .template-card.selected::after { content: 'Active'; position: absolute; top: 8px; right: 8px; background: var(--gold); color: var(--ink); font-size: 8px; font-weight: 700; letter-spacing: 0.1em; padding: 2px 7px; text-transform: uppercase; }
+  .tprev { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .t1 { background: linear-gradient(135deg, #1a1410 55%, #2a2218 55%); }
+  .t2 { background: linear-gradient(135deg, #0f172a 55%, #1e293b 55%); }
+  .t3 { background: linear-gradient(135deg, #111 55%, #1f1f1f 55%); }
+  .t4 { background: linear-gradient(135deg, #1a1a2e 55%, #16213e 55%); }
+  .tname { padding: 8px 12px; font-size: 10px; font-weight: 600; color: var(--cream-dim); letter-spacing: 0.06em; border-top: 1px solid var(--border-soft); background: var(--surface2); text-transform: uppercase; }
+
+  /* Drag list */
+  .order-list { list-style: none; }
+  .order-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid var(--border-soft); margin-bottom: 6px; cursor: grab; background: rgba(255,255,255,0.02); transition: background 0.15s, border-color 0.15s; user-select: none; }
+  .order-item:hover { border-color: rgba(201,168,76,0.25); }
+  .order-item.dragging { opacity: 0.35; }
+  .order-item.drag-over { border-color: var(--gold); background: rgba(201,168,76,0.07); }
+  .drag-handle { color: var(--muted); font-size: 14px; cursor: grab; }
+  .order-name { flex: 1; font-size: 13px; color: var(--cream-dim); }
+  .order-num { font-size: 10px; color: var(--muted); font-weight: 600; }
+
+  /* Password strength */
+  .strength-bar { height: 3px; background: rgba(255,255,255,0.07); margin-top: 8px; }
+  .strength-fill { height: 100%; width: 0; transition: width 0.3s, background 0.3s; }
+  .strength-label { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+  /* Danger zone */
+  .danger-zone { border: 1px solid rgba(201,76,76,0.2); padding: 20px 24px; margin-top: 8px; }
+  .danger-title { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--danger); margin-bottom: 14px; }
+  .btn-danger { padding: 8px 18px; background: none; border: 1px solid rgba(201,76,76,0.35); color: var(--danger); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; margin-right: 8px; }
+  .btn-danger:hover { background: rgba(201,76,76,0.08); border-color: var(--danger); }
+
+  /* Save bar */
+  .save-bar { position: fixed; bottom: 0; left: 240px; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 14px 48px; display: flex; align-items: center; justify-content: space-between; z-index: 50; }
+  .save-status { font-size: 12px; color: var(--muted); }
+  .save-status.saved { color: var(--success); }
+  .save-status.dirty { color: var(--gold); }
+
+  .btn-save { padding: 10px 28px; background: var(--gold); color: var(--ink); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; border: none; cursor: pointer; transition: background 0.2s, transform 0.15s; }
+  .btn-save:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .btn-ghost { padding: 10px 20px; background: none; border: 1px solid var(--border); color: var(--cream-dim); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; margin-right: 8px; }
+  .btn-ghost:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--surface); border: 1px solid var(--border); padding: 11px 22px; font-size: 13px; color: var(--cream-dim); z-index: 999; white-space: nowrap; transition: transform 0.3s cubic-bezier(0.22,1,0.36,1); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">Resume<span>AI</span></div>
+  <p class="nav-label">Main</p>
+  <a href="/dashboard" class="nav-link"><span>⬡</span> Dashboard</a>
+  <a href="/resume"    class="nav-link"><span>✦</span> Build Resume</a>
+  <a href="/versions"  class="nav-link"><span>◈</span> Versions</a>
+  <p class="nav-label">Account</p>
+  <a href="/settings"  class="nav-link active"><span>◇</span> Settings</a>
+  <a href="/logout"    class="nav-link"><span>⊙</span> Logout</a>
+</aside>
+
+<div class="main">
+
+  <nav class="settings-nav">
+    <p class="settings-nav-title">Settings</p>
+    <button class="snav-item active" onclick="showSection('account',this)"><span class="snav-icon">👤</span>Account</button>
+    <button class="snav-item" onclick="showSection('resume',this)"><span class="snav-icon">🎨</span>Resume</button>
+    <button class="snav-item" onclick="showSection('editor',this)"><span class="snav-icon">📝</span>Editor</button>
+    <button class="snav-item" onclick="showSection('language',this)"><span class="snav-icon">🌍</span>Language</button>
+    <button class="snav-item" onclick="showSection('privacy',this)"><span class="snav-icon">🔒</span>Privacy</button>
+    <button class="snav-item" onclick="showSection('download',this)"><span class="snav-icon">📤</span>Download</button>
+    <button class="snav-item" onclick="showSection('notifications',this)"><span class="snav-icon">🔔</span>Notifications</button>
+  </nav>
+
+  <div class="settings-content">
+    <p class="page-eyebrow">Preferences</p>
+    <h1 id="sectionTitle">Account Settings</h1>
+
+    <!-- ACCOUNT -->
+    <div class="settings-section active" id="sec-account">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">👤</span><div><p class="panel-title">Profile Details</p><p class="panel-desc">Update your personal information</p></div></div>
+        <div class="panel-body">
+          <div class="form-row col">
+            <div class="row-label">Full Name</div>
+            <input type="text" id="s_name" placeholder="Your name" value="{{ session.get('user','') }}">
+          </div>
+          <div class="form-row col" style="margin-top:12px">
+            <div class="row-label">Email Address</div>
+            <input type="email" id="s_email" placeholder="you@example.com" value="{{ session.get('user_email','') }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">🔑</span><div><p class="panel-title">Change Password</p><p class="panel-desc">Keep your account secure</p></div></div>
+        <div class="panel-body">
+          <div class="form-row col">
+            <div class="row-label">Current Password</div>
+            <input type="password" id="s_oldpw" placeholder="Current password">
+          </div>
+          <div class="form-row col" style="margin-top:12px">
+            <div class="row-label">New Password</div>
+            <input type="password" id="s_newpw" placeholder="Min. 8 characters" oninput="checkStrength(this.value)">
+            <div class="strength-bar"><div class="strength-fill" id="sFill"></div></div>
+            <div class="strength-label" id="sLabel">Enter a new password</div>
+          </div>
+          <div class="form-row col" style="margin-top:12px">
+            <div class="row-label">Confirm New Password</div>
+            <input type="password" id="s_confirmpw" placeholder="Repeat new password">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">🚪</span><div><p class="panel-title">Sessions</p><p class="panel-desc">Active login management</p></div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div><div class="row-label">Current session</div><div class="row-hint">This browser — active now</div></div>
+            <span style="font-size:11px;color:var(--success);font-weight:600;">● Active</span>
+          </div>
+          <div class="form-row">
+            <div><div class="row-label">Logout from all devices</div><div class="row-hint">Ends all other active sessions</div></div>
+            <button class="btn-danger" onclick="showToast('Logged out of all other devices')">Logout All</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="danger-zone">
+        <p class="danger-title">Danger Zone</p>
+        <button class="btn-danger" onclick="if(confirm('Delete your account? This cannot be undone.'))showToast('Account deletion requested')">Delete Account</button>
+      </div>
+    </div>
+
+    <!-- RESUME SETTINGS -->
+    <div class="settings-section" id="sec-resume">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">📄</span><div><p class="panel-title">Default Template</p><p class="panel-desc">Starting template for new resumes</p></div></div>
+        <div class="panel-body">
+          <div class="template-grid">
+            <div class="template-card selected" onclick="selectTemplate(this)"><div class="tprev t1">✦</div><div class="tname">AI Modern</div></div>
+            <div class="template-card" onclick="selectTemplate(this)"><div class="tprev t2">◈</div><div class="tname">Cyber Glass</div></div>
+            <div class="template-card" onclick="selectTemplate(this)"><div class="tprev t3">⬡</div><div class="tname">Dark Pro</div></div>
+            <div class="template-card" onclick="selectTemplate(this)"><div class="tprev t4">◇</div><div class="tname">Editorial Clean</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">🔤</span><div><p class="panel-title">Font Style</p><p class="panel-desc">Body font for your PDF resume</p></div></div>
+        <div class="panel-body">
+          <div class="form-row col">
+            <div class="row-label">Font Family</div>
+            <div class="font-grid">
+              <button class="font-btn selected" onclick="selectFont(this)">EB Garamond</button>
+              <button class="font-btn" onclick="selectFont(this)">Georgia</button>
+              <button class="font-btn" onclick="selectFont(this)">Helvetica</button>
+              <button class="font-btn" onclick="selectFont(this)">DM Sans</button>
+              <button class="font-btn" onclick="selectFont(this)">Lato</button>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:14px">
+            <div><div class="row-label">Font Size</div><div class="row-hint">Body text size in the PDF</div></div>
+            <div class="range-row">
+              <input type="range" min="9" max="13" value="11" id="fontSizeRange" oninput="document.getElementById('fsVal').textContent=this.value+'pt';markDirty()">
+              <span class="range-val" id="fsVal">11pt</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">🎨</span><div><p class="panel-title">Theme Accent Color</p><p class="panel-desc">Accent color for headings and sidebar</p></div></div>
+        <div class="panel-body">
+          <div class="color-grid">
+            <div class="color-swatch selected" style="background:#c9a84c" onclick="selectColor(this)" title="Gold"></div>
+            <div class="color-swatch" style="background:#4c7fc9" onclick="selectColor(this)" title="Blue"></div>
+            <div class="color-swatch" style="background:#4caf7d" onclick="selectColor(this)" title="Green"></div>
+            <div class="color-swatch" style="background:#c94c7f" onclick="selectColor(this)" title="Rose"></div>
+            <div class="color-swatch" style="background:#9b59b6" onclick="selectColor(this)" title="Purple"></div>
+            <div class="color-swatch" style="background:#c94c4c" onclick="selectColor(this)" title="Red"></div>
+            <div class="color-swatch" style="background:#4cc9c9" onclick="selectColor(this)" title="Teal"></div>
+            <div class="color-swatch" style="background:#e8e8e8" onclick="selectColor(this)" title="Light"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">↕</span><div><p class="panel-title">Section Order</p><p class="panel-desc">Drag to reorder resume sections</p></div></div>
+        <div class="panel-body">
+          <ul class="order-list" id="sectionOrder">
+            <li class="order-item" draggable="true"><span class="drag-handle">⠿</span><span class="order-name">Professional Summary</span><span class="order-num">1</span></li>
+            <li class="order-item" draggable="true"><span class="drag-handle">⠿</span><span class="order-name">Core Skills</span><span class="order-num">2</span></li>
+            <li class="order-item" draggable="true"><span class="drag-handle">⠿</span><span class="order-name">Work Experience</span><span class="order-num">3</span></li>
+            <li class="order-item" draggable="true"><span class="drag-handle">⠿</span><span class="order-name">Education</span><span class="order-num">4</span></li>
+            <li class="order-item" draggable="true"><span class="drag-handle">⠿</span><span class="order-name">Certifications</span><span class="order-num">5</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="settings-section" id="sec-editor">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">⚙</span><div><p class="panel-title">Editor Behaviour</p></div></div>
+        <div class="panel-body">
+          <div class="form-row"><div><div class="row-label">Auto-save</div><div class="row-hint">Save a snapshot every 5 minutes automatically</div></div><label class="toggle"><input type="checkbox" id="tog_autosave" checked onchange="markDirty()"><span class="toggle-track"></span></label></div>
+          <div class="form-row"><div><div class="row-label">Spell Check</div><div class="row-hint">Highlight spelling errors in text fields</div></div><label class="toggle"><input type="checkbox" id="tog_spell" checked onchange="markDirty()"><span class="toggle-track"></span></label></div>
+          <div class="form-row"><div><div class="row-label">Format Mode</div><div class="row-hint">How experience entries are laid out</div></div><select id="s_format" onchange="markDirty()"><option>Bullet Points</option><option>Paragraph</option><option>Mixed</option></select></div>
+          <div class="form-row"><div><div class="row-label">AI Suggestions</div><div class="row-hint">Show AI-powered text improvement hints</div></div><label class="toggle"><input type="checkbox" id="tog_ai" checked onchange="markDirty()"><span class="toggle-track"></span></label></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LANGUAGE -->
+    <div class="settings-section" id="sec-language">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">🌍</span><div><p class="panel-title">Language & Region</p></div></div>
+        <div class="panel-body">
+          <div class="form-row"><div><div class="row-label">Resume Language</div><div class="row-hint">Language used in the generated resume</div></div><select id="s_lang" onchange="markDirty()"><option>English (US)</option><option>English (UK)</option><option>French</option><option>German</option><option>Spanish</option><option>Tamil</option><option>Hindi</option></select></div>
+          <div class="form-row"><div><div class="row-label">Date Format</div><div class="row-hint">How dates appear in your resume</div></div><select id="s_date" onchange="markDirty()"><option>MM/YYYY</option><option>Month YYYY</option><option>DD/MM/YYYY</option><option>YYYY-MM-DD</option></select></div>
+          <div class="form-row"><div><div class="row-label">Page Size</div><div class="row-hint">PDF export paper size</div></div>
+            <div class="radio-group">
+              <button class="radio-btn selected" onclick="selectRadio(this)">A4</button>
+              <button class="radio-btn" onclick="selectRadio(this)">Letter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRIVACY -->
+    <div class="settings-section" id="sec-privacy">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">🔒</span><div><p class="panel-title">Resume Visibility</p><p class="panel-desc">Control who can view your shared resume</p></div></div>
+        <div class="panel-body">
+          <div class="form-row"><div><div class="row-label">Visibility</div><div class="row-hint">Who can view your shared resume link</div></div>
+            <div class="radio-group">
+              <button class="radio-btn selected" onclick="selectRadio(this)">Private</button>
+              <button class="radio-btn" onclick="selectRadio(this)">Link Only</button>
+              <button class="radio-btn" onclick="selectRadio(this)">Public</button>
+            </div>
+          </div>
+          <div class="form-row"><div><div class="row-label">Hide Contact Details</div><div class="row-hint">Mask email and phone in shared view</div></div><label class="toggle"><input type="checkbox" id="tog_hide" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+          <div class="form-row"><div><div class="row-label">Hide LinkedIn URL</div><div class="row-hint">Remove LinkedIn from public view</div></div><label class="toggle"><input type="checkbox" id="tog_linkedin" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+          <div class="form-row"><div><div class="row-label">Hide Phone Number</div><div class="row-hint">Remove phone from public view</div></div><label class="toggle"><input type="checkbox" id="tog_phone" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOWNLOAD -->
+    <div class="settings-section" id="sec-download">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">📤</span><div><p class="panel-title">Export Settings</p><p class="panel-desc">Configure how your resume is downloaded</p></div></div>
+        <div class="panel-body">
+          <div class="form-row"><div><div class="row-label">Default Format</div><div class="row-hint">Format used when clicking Download</div></div>
+            <div class="radio-group">
+              <button class="radio-btn selected" onclick="selectRadio(this)">PDF</button>
+              <button class="radio-btn" onclick="selectRadio(this)">DOCX</button>
+            </div>
+          </div>
+          <div class="form-row"><div><div class="row-label">Include AI Score Page</div><div class="row-hint">Append AI score summary to PDF</div></div><label class="toggle"><input type="checkbox" id="tog_score" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+          <div class="form-row col" style="margin-top:4px">
+            <div class="row-label">File Name Format</div>
+            <div class="row-hint" style="margin-bottom:8px">Placeholders: {name} {version} {date}</div>
+            <input type="text" id="s_filename" value="{name}_v{version}" placeholder="{name}_v{version}" oninput="markDirty()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="settings-section" id="sec-notifications">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-icon">🔔</span><div><p class="panel-title">Notification Preferences</p><p class="panel-desc">Control alerts and reminders</p></div></div>
+        <div class="panel-body">
+          <div class="form-row"><div><div class="row-label">Email Alerts</div><div class="row-hint">Notify when a resume version is saved</div></div><label class="toggle"><input type="checkbox" id="tog_email" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+          <div class="form-row"><div><div class="row-label">Tips & Reminders</div><div class="row-hint">Weekly tips to improve your resume score</div></div><label class="toggle"><input type="checkbox" id="tog_tips" checked onchange="markDirty()"><span class="toggle-track"></span></label></div>
+          <div class="form-row"><div><div class="row-label">Auto-save Toasts</div><div class="row-hint">Show notification when a version auto-saves</div></div><label class="toggle"><input type="checkbox" id="tog_autotoast" checked onchange="markDirty()"><span class="toggle-track"></span></label></div>
+          <div class="form-row"><div><div class="row-label">Score Improvement Alerts</div><div class="row-hint">Alert when AI score can be improved</div></div><label class="toggle"><input type="checkbox" id="tog_scoreAlert" onchange="markDirty()"><span class="toggle-track"></span></label></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Save bar -->
+<div class="save-bar">
+  <span class="save-status" id="saveStatus">No changes</span>
+  <div>
+    <button class="btn-ghost" onclick="resetSettings()">Reset Defaults</button>
+    <button class="btn-save" onclick="saveSettings()">Save Changes</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<script>
+  const SKEY = 'resumeAISettings';
+
+  const TITLES = { account:'Account Settings', resume:'Resume Settings', editor:'Editor Settings', language:'Language & Format', privacy:'Privacy', download:'Download', notifications:'Notifications' };
+
+  function showSection(id, btn) {
+    document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.snav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    btn.classList.add('active');
+    document.getElementById('sectionTitle').textContent = TITLES[id];
+  }
+
+  function selectTemplate(el) { document.querySelectorAll('.template-card').forEach(c=>c.classList.remove('selected')); el.classList.add('selected'); markDirty(); }
+  function selectFont(el) { document.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); markDirty(); }
+  function selectColor(el) { document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected')); el.classList.add('selected'); markDirty(); }
+  function selectRadio(el) { el.closest('.radio-group').querySelectorAll('.radio-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); markDirty(); }
+
+  function markDirty() {
+    const el = document.getElementById('saveStatus');
+    el.textContent = '● Unsaved changes'; el.className = 'save-status dirty';
+  }
+
+  function checkStrength(pw) {
+    let s = 0;
+    if (pw.length >= 8) s++;
+    if (/[A-Z]/.test(pw)) s++;
+    if (/[0-9]/.test(pw)) s++;
+    if (/[^A-Za-z0-9]/.test(pw)) s++;
+    const m = [
+      {w:'0%',c:'transparent',t:'Enter a new password'},
+      {w:'25%',c:'#c94c4c',t:'Weak'},
+      {w:'50%',c:'#e8c060',t:'Fair'},
+      {w:'75%',c:'#c9a84c',t:'Good'},
+      {w:'100%',c:'#4caf7d',t:'Strong'}
+    ][s];
+    const fill = document.getElementById('sFill');
+    fill.style.width = m.w; fill.style.background = m.c;
+    const lbl = document.getElementById('sLabel');
+    lbl.textContent = m.t; lbl.style.color = m.c;
+    markDirty();
+  }
+
+  // Drag to reorder
+  let dragSrc = null;
+  document.querySelectorAll('.order-item').forEach(item => {
+    item.addEventListener('dragstart', e => { dragSrc = item; item.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', e => {
+      e.preventDefault(); item.classList.remove('drag-over');
+      if (dragSrc && dragSrc !== item) {
+        const list = item.parentNode;
+        const items = [...list.children];
+        if (items.indexOf(dragSrc) < items.indexOf(item)) list.insertBefore(dragSrc, item.nextSibling);
+        else list.insertBefore(dragSrc, item);
+        // Renumber
+        list.querySelectorAll('.order-num').forEach((n,i) => n.textContent = i+1);
+        markDirty();
+      }
+    });
+  });
+
+  function saveSettings() {
+    const s = {
+      name: document.getElementById('s_name').value,
+      email: document.getElementById('s_email').value,
+      autosave: document.getElementById('tog_autosave').checked,
+      spell: document.getElementById('tog_spell').checked,
+      ai: document.getElementById('tog_ai').checked,
+      format: document.getElementById('s_format').value,
+      lang: document.getElementById('s_lang').value,
+      date: document.getElementById('s_date').value,
+      filename: document.getElementById('s_filename').value,
+      emailAlerts: document.getElementById('tog_email').checked,
+      tips: document.getElementById('tog_tips').checked,
+      autoToast: document.getElementById('tog_autotoast').checked,
+      scoreAlert: document.getElementById('tog_scoreAlert').checked,
+      hideContact: document.getElementById('tog_hide').checked,
+      hideLinkedin: document.getElementById('tog_linkedin').checked,
+      hidePhone: document.getElementById('tog_phone').checked,
+      includeScore: document.getElementById('tog_score').checked,
+      fontSize: document.getElementById('fontSizeRange').value,
+      template: document.querySelector('.template-card.selected .tname')?.textContent,
+      font: document.querySelector('.font-btn.selected')?.textContent,
+      accentColor: document.querySelector('.color-swatch.selected')?.style.background,
+      sectionOrder: [...document.querySelectorAll('.order-name')].map(n=>n.textContent),
+    };
+
+    localStorage.setItem(SKEY, JSON.stringify(s));
+
+    const el = document.getElementById('saveStatus');
+    el.textContent = '✓ All changes saved'; el.className = 'save-status saved';
+
+    showToast('✦ Settings saved');
+
+    fetch('/settings/save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(s) }).catch(()=>{});
+  }
+
+  function resetSettings() {
+    if (!confirm('Reset all settings to defaults?')) return;
+    localStorage.removeItem(SKEY);
+    showToast('Settings reset to defaults');
+    setTimeout(() => location.reload(), 800);
+  }
+
+  function loadSettings() {
+    const s = JSON.parse(localStorage.getItem(SKEY) || '{}');
+    if (!Object.keys(s).length) return;
+
+    const bools = { tog_autosave:'autosave', tog_spell:'spell', tog_ai:'ai', tog_email:'emailAlerts', tog_tips:'tips', tog_autotoast:'autoToast', tog_scoreAlert:'scoreAlert', tog_hide:'hideContact', tog_linkedin:'hideLinkedin', tog_phone:'hidePhone', tog_score:'includeScore' };
+    Object.entries(bools).forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el && s[key] !== undefined) el.checked = s[key];
+    });
+
+    if (s.format)   document.getElementById('s_format').value = s.format;
+    if (s.lang)     document.getElementById('s_lang').value   = s.lang;
+    if (s.date)     document.getElementById('s_date').value   = s.date;
+    if (s.filename) document.getElementById('s_filename').value = s.filename;
+    if (s.fontSize) { document.getElementById('fontSizeRange').value = s.fontSize; document.getElementById('fsVal').textContent = s.fontSize + 'pt'; }
+
+    const el = document.getElementById('saveStatus');
+    el.textContent = '✓ Settings loaded'; el.className = 'save-status saved';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  loadSettings();
+</script>
+</body>
+</html>

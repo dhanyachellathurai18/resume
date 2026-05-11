@@ -107,6 +107,7 @@
 
   .autosave-dot.saved { background: var(--success); }
   .autosave-dot.saving { background: var(--gold); animation: pulse 0.8s infinite; }
+  .autosave-dot.error { background: #e05252; }
 
   @keyframes pulse {
     0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
@@ -354,7 +355,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
       <span class="autosave-timer" id="nextSaveTimer"></span>
-      <button class="save-now-btn" onclick="saveVersion(true)">Save Now</button>
+      <button class="save-now-btn" onclick="saveToServer(true)">Save Now</button>
       <button class="save-now-btn" onclick="openVersions()">◈ View Versions</button>
     </div>
   </div>
@@ -474,7 +475,7 @@
 
     <div class="submit-row">
       <button type="submit" class="btn-primary">✦ Generate AI Resume</button>
-      <button type="button" class="btn-secondary" onclick="saveVersion(true)">⬡ Save Draft</button>
+      <button type="button" class="btn-secondary" onclick="saveToServer(true)">⬡ Save Draft</button>
     </div>
 
   </form>
@@ -502,20 +503,9 @@
   const SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
   let nextSaveAt = Date.now() + SAVE_INTERVAL;
-  let versionCounter = 1;
+  let isSaving = false;
 
-  // Load existing draft
-  function loadDraft() {
-    const draft = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    FIELDS.forEach(id => {
-      const el = document.getElementById('f_' + id);
-      if (el && draft[id] !== undefined) el.value = draft[id];
-    });
-    const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
-    if (versions.length > 0) versionCounter = versions[versions.length - 1].version + 1;
-  }
-
-  // Collect form data
+  // ── Collect all form field values ────────────────────────────────────────
   function collectData() {
     const data = {};
     FIELDS.forEach(id => {
@@ -525,49 +515,95 @@
     return data;
   }
 
-  // Save current draft silently
-  function saveDraft() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(collectData()));
+  // ── Save to localStorage (fast, silent backup) ───────────────────────────
+  function saveDraftLocal() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(collectData())); } catch(e) {}
   }
 
-  // Save a named version snapshot
-  function saveVersion(manual = false) {
+  // ── Load draft from localStorage on page load ────────────────────────────
+  function loadDraft() {
+    try {
+      const draft = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      FIELDS.forEach(id => {
+        const el = document.getElementById('f_' + id);
+        if (el && draft[id] !== undefined && draft[id] !== '') el.value = draft[id];
+      });
+    } catch(e) {}
+  }
+
+  // ── THE FIX: POST to Flask /autosave endpoint ─────────────────────────────
+  async function saveToServer(manual = false) {
+    if (isSaving) return;
+    isSaving = true;
+
     const data = collectData();
-    const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
-    const name = data.name ? data.name.trim() : 'Draft';
-    const version = {
-      version: versionCounter++,
-      label: name ? `${name}'s Resume` : 'Draft',
-      timestamp: Date.now(),
-      data: data,
-      manual: manual
-    };
-    versions.push(version);
-    // Keep last 30 versions
-    if (versions.length > 30) versions.splice(0, versions.length - 30);
-    localStorage.setItem(VERSIONS_KEY, JSON.stringify(versions));
-    saveDraft();
+    const name = (data.name || '').trim();
+    data.label = name ? `${name}'s Resume` : 'Draft';
 
-    // Update UI
-    showAutosaveDot('saved');
-    showToast(manual ? '✦ Version saved manually' : '⬡ Auto-saved');
-    renderVersionsList();
-    nextSaveAt = Date.now() + SAVE_INTERVAL;
+    setDotState('saving', 'Saving…');
+
+    try {
+      const response = await fetch('/autosave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error('Server error: ' + response.status);
+
+      const result = await response.json();
+
+      // Also keep local copy
+      saveDraftLocal();
+
+      // Update local version list for the panel
+      saveVersionLocal(data, manual, result.version);
+
+      setDotState('saved', 'Saved successfully');
+      showToast(manual ? `✦ Saved — Version ${result.version}` : `⬡ Auto-saved — Version ${result.version}`);
+      renderVersionsList();
+      nextSaveAt = Date.now() + SAVE_INTERVAL;
+
+    } catch (err) {
+      console.error('Autosave failed:', err);
+      setDotState('error', 'Save failed — will retry');
+      showToast('⚠ Save failed, check connection');
+    } finally {
+      isSaving = false;
+    }
   }
 
-  function showAutosaveDot(state) {
-    const dot = document.getElementById('autosaveDot');
-    const text = document.getElementById('autosaveText');
+  // ── Keep a local version list just for the panel UI ──────────────────────
+  function saveVersionLocal(data, manual, serverVersion) {
+    try {
+      const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
+      versions.push({
+        version: serverVersion,
+        label: data.label,
+        timestamp: Date.now(),
+        data: data,
+        manual: manual
+      });
+      if (versions.length > 30) versions.splice(0, versions.length - 30);
+      localStorage.setItem(VERSIONS_KEY, JSON.stringify(versions));
+    } catch(e) {}
+  }
+
+  // ── Dot + status text ─────────────────────────────────────────────────────
+  function setDotState(state, text) {
+    const dot  = document.getElementById('autosaveDot');
+    const label = document.getElementById('autosaveText');
     dot.className = 'autosave-dot ' + state;
-    if (state === 'saving') text.textContent = 'Saving…';
-    else if (state === 'saved') text.textContent = 'Saved successfully';
-    else text.textContent = 'Auto-saving every 5 minutes';
-    if (state === 'saved') setTimeout(() => {
-      dot.className = 'autosave-dot';
-      text.textContent = 'Auto-saving every 5 minutes';
-    }, 2500);
+    label.textContent = text;
+    if (state === 'saved' || state === 'error') {
+      setTimeout(() => {
+        dot.className = 'autosave-dot';
+        label.textContent = 'Auto-saving every 5 minutes';
+      }, 2500);
+    }
   }
 
+  // ── Toast ─────────────────────────────────────────────────────────────────
   function showToast(msg) {
     const t = document.getElementById('toast');
     document.getElementById('toastText').textContent = msg;
@@ -575,36 +611,41 @@
     setTimeout(() => t.classList.remove('show'), 2800);
   }
 
+  // ── Versions panel ────────────────────────────────────────────────────────
   function renderVersionsList() {
-    const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
-    const container = document.getElementById('versionsList');
-    if (versions.length === 0) {
-      container.innerHTML = '<p class="no-versions">No versions saved yet.<br>Versions save automatically<br>every 5 minutes.</p>';
-      return;
-    }
-    container.innerHTML = [...versions].reverse().map(v => `
-      <div class="version-item" onclick="restoreVersion(${v.version})">
-        <div class="version-meta">
-          <span class="version-num">Version ${v.version} ${v.manual ? '· Manual' : '· Auto'}</span>
-          <span class="version-time">${new Date(v.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+    try {
+      const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
+      const container = document.getElementById('versionsList');
+      if (versions.length === 0) {
+        container.innerHTML = '<p class="no-versions">No versions saved yet.<br>Versions save automatically<br>every 5 minutes.</p>';
+        return;
+      }
+      container.innerHTML = [...versions].reverse().map(v => `
+        <div class="version-item" onclick="restoreVersion(${v.version})">
+          <div class="version-meta">
+            <span class="version-num">Version ${v.version} ${v.manual ? '· Manual' : '· Auto'}</span>
+            <span class="version-time">${new Date(v.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+          </div>
+          <div class="version-label">${v.label}</div>
+          <div class="version-time">${new Date(v.timestamp).toLocaleDateString()}</div>
+          <span class="version-restore">↩ Click to restore</span>
         </div>
-        <div class="version-label">${v.label}</div>
-        <div class="version-time">${new Date(v.timestamp).toLocaleDateString()}</div>
-        <span class="version-restore">↩ Click to restore</span>
-      </div>
-    `).join('');
+      `).join('');
+    } catch(e) {}
   }
 
   function restoreVersion(num) {
-    const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
-    const v = versions.find(x => x.version === num);
-    if (!v) return;
-    FIELDS.forEach(id => {
-      const el = document.getElementById('f_' + id);
-      if (el && v.data[id] !== undefined) el.value = v.data[id];
-    });
-    closeVersions();
-    showToast(`↩ Restored version ${num}`);
+    try {
+      const versions = JSON.parse(localStorage.getItem(VERSIONS_KEY) || '[]');
+      const v = versions.find(x => x.version === num);
+      if (!v) return;
+      FIELDS.forEach(id => {
+        const el = document.getElementById('f_' + id);
+        if (el && v.data[id] !== undefined) el.value = v.data[id];
+      });
+      closeVersions();
+      showToast(`↩ Restored version ${num}`);
+    } catch(e) {}
   }
 
   function openVersions() {
@@ -618,18 +659,19 @@
     document.getElementById('overlay').classList.remove('show');
   }
 
+  // ── Photo preview ─────────────────────────────────────────────────────────
   function previewPhoto(input) {
     if (input.files && input.files[0]) {
       const reader = new FileReader();
       reader.onload = e => {
-        const preview = document.getElementById('photoPreview');
-        preview.innerHTML = `<img src="${e.target.result}" alt="Photo preview">`;
+        document.getElementById('photoPreview').innerHTML =
+          `<img src="${e.target.result}" alt="Photo preview">`;
       };
       reader.readAsDataURL(input.files[0]);
     }
   }
 
-  // Countdown timer update
+  // ── Countdown timer ───────────────────────────────────────────────────────
   function updateTimer() {
     const remaining = Math.max(0, nextSaveAt - Date.now());
     const mins = Math.floor(remaining / 60000);
@@ -638,23 +680,20 @@
       `Next auto-save in ${mins}:${secs.toString().padStart(2,'0')}`;
   }
 
-  // Auto-save every 5 minutes
-  setInterval(() => {
-    const dot = document.getElementById('autosaveDot');
-    dot.className = 'autosave-dot saving';
-    setTimeout(() => saveVersion(false), 600);
-  }, SAVE_INTERVAL);
+  // ── Auto-save every 5 minutes → server ───────────────────────────────────
+  setInterval(() => saveToServer(false), SAVE_INTERVAL);
 
-  // Timer tick
+  // ── Timer tick every second ───────────────────────────────────────────────
   setInterval(updateTimer, 1000);
 
-  // Save draft on any input change
-  document.querySelectorAll('input, textarea, select').forEach(el => {
-    el.addEventListener('input', () => saveDraft());
+  // ── Save local draft on any keystroke (lightweight) ───────────────────────
+  document.querySelectorAll('input:not([type=file]), textarea, select').forEach(el => {
+    el.addEventListener('input', saveDraftLocal);
   });
 
-  // Init
+  // ── Init ──────────────────────────────────────────────────────────────────
   loadDraft();
+  renderVersionsList();
   updateTimer();
 </script>
 </body>

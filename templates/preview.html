@@ -1,480 +1,422 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<title>Resume Preview — ResumeAI</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <title>Resume Preview — ResumeAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --ink: #0d0d0d;
-    --cream: #f5f0e8;
-    --cream-dim: rgba(245,240,232,0.65);
-    --gold: #c9a84c;
-    --gold-light: #e8c96e;
-    --muted: #6b6560;
-    --surface: #1a1814;
-    --border: rgba(201,168,76,0.18);
-  }
+        body {
+            background: #0f0d0a;
+            font-family: 'DM Sans', sans-serif;
+            color: #f5f0e8;
+            min-height: 100vh;
+        }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--ink);
-    color: var(--cream);
-    min-height: 100vh;
-  }
+        /* ── Top nav ── */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15,13,10,0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(201,168,76,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            height: 60px;
+        }
 
-  /* Sidebar */
-  .sidebar {
-    position: fixed; top: 0; left: 0;
-    width: 240px; height: 100vh;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    padding: 32px 24px; z-index: 100;
-  }
+        .topbar-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: #c9a84c;
+            letter-spacing: 0.5px;
+        }
 
-  .brand {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px; font-weight: 900;
-    color: var(--cream); margin-bottom: 48px;
-  }
+        .topbar-actions {
+            display: flex;
+            gap: 10px;
+        }
 
-  .brand span { color: var(--gold); }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 20px;
+            border-radius: 7px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-  .nav-link {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; color: var(--cream-dim);
-    text-decoration: none; font-size: 14px;
-    border-radius: 2px; transition: background 0.15s, color 0.15s;
-    margin-bottom: 2px;
-  }
+        .btn-gold {
+            background: #c9a84c;
+            color: #1a1410;
+        }
+        .btn-gold:hover {
+            background: #d4b86a;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(201,168,76,0.35);
+        }
 
-  .nav-link:hover { background: rgba(255,255,255,0.05); color: var(--cream); }
-  .nav-link.active { background: rgba(201,168,76,0.12); color: var(--gold); font-weight: 500; }
+        .btn-ghost {
+            background: transparent;
+            color: #9a8f82;
+            border: 1px solid rgba(154,143,130,0.3);
+        }
+        .btn-ghost:hover {
+            color: #f5f0e8;
+            border-color: rgba(245,240,232,0.4);
+        }
 
-  /* Main */
-  .main {
-    margin-left: 240px;
-    padding: 40px 48px;
-  }
+        /* ── Page layout ── */
+        .page {
+            max-width: 860px;
+            margin: 40px auto;
+            padding: 0 20px 60px;
+        }
 
-  .page-header {
-    display: flex; align-items: flex-end; justify-content: space-between;
-    margin-bottom: 32px;
-  }
+        /* ── Resume card ── */
+        .resume-card {
+            background: #fff;
+            color: #1a1410;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 640px;
+        }
 
-  .eyebrow {
-    font-size: 10px; font-weight: 500;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--gold); margin-bottom: 8px;
-  }
+        /* ── Left sidebar ── */
+        .sidebar {
+            background: #1a1410;
+            color: #f5f0e8;
+            padding: 36px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
 
-  h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem; font-weight: 900; color: var(--cream);
-  }
+        .photo-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
 
-  .action-row {
-    display: flex; gap: 12px;
-  }
+        .photo-wrap img,
+        .photo-placeholder {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #c9a84c;
+        }
 
-  .btn {
-    padding: 12px 22px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    border: none; cursor: pointer;
-    transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-  }
+        .photo-placeholder {
+            background: #2a2520;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
 
-  .btn-gold { background: var(--gold); color: var(--ink); }
-  .btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+        .sb-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            color: #f5f0e8;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
 
-  .btn-outline {
-    background: none; border: 1px solid var(--border);
-    color: var(--cream-dim);
-  }
+        .sb-jobtitle {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            color: #c9a84c;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
 
-  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+        .sb-rule {
+            border: none;
+            border-top: 1px solid rgba(201,168,76,0.3);
+            margin: 0 0 18px;
+        }
 
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .sb-section-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #c9a84c;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
 
-  /* Preview container */
-  .preview-wrap {
-    background: #e8e4dc;
-    padding: 16px;
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 60px rgba(0,0,0,0.5);
-  }
+        .sb-section-rule {
+            border: none;
+            border-top: 0.5px solid rgba(201,168,76,0.25);
+            margin: 0 0 10px;
+        }
 
-  /* ─── RESUME DOCUMENT ─── */
-  #resumeDoc {
-    width: 794px;
-    min-height: 1123px;
-    background: #fff;
-    font-family: 'EB Garamond', Georgia, serif;
-    color: #1a1410;
-    position: relative;
-    overflow: hidden;
-  }
+        .contact-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 7px;
+            align-items: flex-start;
+        }
 
-  /* Left sidebar column */
-  .doc-sidebar {
-    position: absolute;
-    top: 0; left: 0;
-    width: 240px; bottom: 0;
-    background: #1a1410;
-    padding: 40px 28px;
-  }
+        .contact-icon {
+            color: #c9a84c;
+            font-weight: 700;
+            font-size: 0.75rem;
+            min-width: 16px;
+            padding-top: 1px;
+        }
 
-  /* Right content column */
-  .doc-content {
-    margin-left: 240px;
-    padding: 40px 36px 40px 32px;
-  }
+        .contact-val {
+            font-size: 0.75rem;
+            color: #9a8f82;
+            line-height: 1.5;
+            word-break: break-all;
+        }
 
-  /* Photo */
-  .doc-photo {
-    width: 120px; height: 120px;
-    border-radius: 50%;
-    border: 3px solid #c9a84c;
-    overflow: hidden;
-    margin: 0 auto 20px;
-    background: #2a2520;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 40px;
-  }
+        .sb-summary {
+            font-size: 0.75rem;
+            color: #9a8f82;
+            line-height: 1.65;
+            margin-top: 4px;
+        }
 
-  .doc-photo img { width: 100%; height: 100%; object-fit: cover; }
+        /* ── Right column ── */
+        .main-col {
+            padding: 36px 32px;
+            background: #fff;
+        }
 
-  .doc-name-side {
-    text-align: center;
-    margin-bottom: 24px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(201,168,76,0.3);
-  }
+        .main-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: #1a1410;
+            line-height: 1.15;
+            margin-bottom: 4px;
+        }
 
-  .doc-name-side h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem; font-weight: 700;
-    color: #f5f0e8; line-height: 1.2;
-  }
+        .main-jobtitle {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: #c9a84c;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
 
-  .doc-name-side p {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 10px; letter-spacing: 0.1em;
-    text-transform: uppercase; color: #c9a84c;
-    margin-top: 5px;
-  }
+        .main-rule {
+            border: none;
+            border-top: 2px solid #1a1410;
+            margin-bottom: 22px;
+        }
 
-  /* Sidebar sections */
-  .side-section { margin-bottom: 22px; }
+        .section {
+            margin-bottom: 22px;
+        }
 
-  .side-label {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 8px; font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    color: #c9a84c; margin-bottom: 10px;
-  }
+        .section-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1.8px;
+            color: #9a8f82;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
 
-  .side-content {
-    font-size: 11px; line-height: 1.7;
-    color: rgba(245,240,232,0.75);
-  }
+        .section-rule {
+            border: none;
+            border-top: 0.5px solid #e8e0d0;
+            margin-bottom: 10px;
+        }
 
-  .side-content a { color: rgba(245,240,232,0.75); }
+        .section-text {
+            font-size: 0.85rem;
+            color: #3a3028;
+            line-height: 1.7;
+        }
 
-  /* Right column */
-  .doc-headline {
-    border-bottom: 2px solid #1a1410;
-    padding-bottom: 16px; margin-bottom: 24px;
-  }
+        /* Skills chips */
+        .skills-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
 
-  .doc-headline h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.2rem; font-weight: 900; color: #1a1410;
-    line-height: 1.05;
-  }
+        .skill-chip {
+            background: #f5f0e8;
+            border: 1px solid #d4c89a;
+            color: #4a3c20;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
 
-  .doc-headline .jobtitle {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
-    color: #c9a84c; margin-top: 6px;
-  }
-
-  /* Right sections */
-  .doc-section { margin-bottom: 24px; }
-
-  .doc-sec-title {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 9px; font-weight: 700;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    color: #8c7a5a;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #e8e0d0;
-    display: flex; align-items: center; gap: 10px;
-  }
-
-  .doc-sec-title::after {
-    content: '';
-    flex: 1; height: 1px; background: #e8e0d0;
-    display: none; /* already in border */
-  }
-
-  .doc-body {
-    font-size: 12.5px; line-height: 1.8; color: #2a2015;
-  }
-
-  .doc-body p { margin-bottom: 6px; }
-
-  /* Skills chips */
-  .skills-wrap {
-    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px;
-  }
-
-  .skill-chip {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 10px; font-weight: 500;
-    padding: 3px 10px;
-    background: #f5f0e8;
-    border: 1px solid #d4c89a;
-    color: #4a3c20;
-    letter-spacing: 0.03em;
-  }
-
-  /* Gold accent line */
-  .doc-content::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 240px;
-    width: 3px; height: 100%;
-    background: #c9a84c;
-  }
-
-  /* Loading */
-  .loading-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(13,13,13,0.85);
-    z-index: 999;
-    align-items: center; justify-content: center;
-    flex-direction: column; gap: 16px;
-  }
-
-  .loading-overlay.show { display: flex; }
-
-  .loading-spinner {
-    width: 40px; height: 40px;
-    border: 2px solid var(--border);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .loading-text {
-    font-size: 14px; color: var(--cream-dim);
-    letter-spacing: 0.05em;
-  }
-</style>
+        /* ── Download loading state ── */
+        .btn-gold.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
 </head>
+
 <body>
 
-<aside class="sidebar">
-  <div class="brand">Resume<span>AI</span></div>
-  <a href="/dashboard" class="nav-link"><span>⬡</span> Dashboard</a>
-  <a href="/resume" class="nav-link"><span>✦</span> Build Resume</a>
-  <a href="/versions" class="nav-link active"><span>◈</span> Versions</a>
-  <a href="/settings" class="nav-link"><span>◇</span> Settings</a>
-  <a href="/logout" class="nav-link"><span>⊙</span> Logout</a>
-</aside>
-
-<main class="main">
-  <div class="page-header">
-    <div>
-      <p class="eyebrow">Preview</p>
-      <h1>Your Resume</h1>
+<!-- TOP NAV -->
+<div class="topbar">
+    <span class="topbar-brand">ResumeAI</span>
+    <div class="topbar-actions">
+        <!-- FIXED: href points directly to /pdf/<id> route -->
+        <a href="/pdf/{{ resume['id'] }}" class="btn btn-gold" id="downloadBtn">
+            ⬇ Download PDF
+        </a>
+        <a href="/versions" class="btn btn-ghost">← Back</a>
     </div>
-    <div class="action-row">
-      <a href="/resume" class="btn btn-outline">← Edit</a>
-      <button class="btn btn-gold" id="downloadBtn" onclick="downloadPDF()">
-        ↓ Download PDF
-      </button>
-    </div>
-  </div>
+</div>
 
-  <div class="preview-wrap">
-    <!-- Resume document that will be converted to PDF -->
-    <div id="resumeDoc">
-      <!-- Left sidebar -->
-      <div class="doc-sidebar">
-        <div class="doc-name-side">
-          <div class="doc-photo" id="docPhoto">
-            {% if resume['photo'] and resume['photo'] != 'noimage.png' %}
-              <img src="/static/uploads/{{ resume['photo'] }}" alt="Profile Photo">
-            {% else %}
-              👤
+<!-- RESUME PREVIEW -->
+<div class="page">
+    <div class="resume-card">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+
+            <!-- Photo -->
+            <div class="photo-wrap">
+                {% if resume['photo'] and resume['photo'] != 'noimage.png' %}
+                    <img src="/static/uploads/{{ resume['photo'] }}" alt="Profile Photo">
+                {% else %}
+                    <div class="photo-placeholder">👤</div>
+                {% endif %}
+            </div>
+
+            <!-- Name + title -->
+            <div class="sb-name">{{ resume['name'] }}</div>
+            {% if resume['jobtitle'] %}
+                <div class="sb-jobtitle">{{ resume['jobtitle'] }}</div>
             {% endif %}
-          </div>
-          <h2 id="docNameSide">{{ resume['name'] }}</h2>
-          <p id="docTitleSide">{{ resume['jobtitle'] if resume['jobtitle'] else '' }}</p>
+            <hr class="sb-rule">
+
+            <!-- Contact -->
+            <div class="sb-section-title">Contact</div>
+            <hr class="sb-section-rule">
+
+            {% if resume['email'] %}
+            <div class="contact-item">
+                <span class="contact-icon">@</span>
+                <span class="contact-val">{{ resume['email'] }}</span>
+            </div>
+            {% endif %}
+
+            {% if resume['phone'] %}
+            <div class="contact-item">
+                <span class="contact-icon">T</span>
+                <span class="contact-val">{{ resume['phone'] }}</span>
+            </div>
+            {% endif %}
+
+            {% if resume['location'] %}
+            <div class="contact-item">
+                <span class="contact-icon">📍</span>
+                <span class="contact-val">{{ resume['location'] }}</span>
+            </div>
+            {% endif %}
+
+            {% if resume['linkedin'] %}
+            <div class="contact-item">
+                <span class="contact-icon">in</span>
+                <span class="contact-val">{{ resume['linkedin'] }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Summary -->
+            {% if resume['objective'] %}
+            <br>
+            <div class="sb-section-title">Summary</div>
+            <hr class="sb-section-rule">
+            <p class="sb-summary">{{ resume['objective'] }}</p>
+            {% endif %}
+
         </div>
 
-        <div class="side-section">
-          <p class="side-label">Contact</p>
-          <div class="side-content" id="docContact">
-            📧 {{ resume['email'] }}<br>
-            📱 {{ resume['phone'] }}<br>
-            📍 {{ resume['location'] }}<br>
-            🔗 {{ resume['linkedin'] }}
-          </div>
-        </div>
+        <!-- MAIN COLUMN -->
+        <div class="main-col">
 
-        <div class="side-section">
-          <p class="side-label">Objective</p>
-          <div class="side-content" id="docObjectiveSide">
-            {{ resume['objective'] }}
-          </div>
-        </div>
-      </div>
+            <div class="main-name">{{ resume['name'] }}</div>
+            {% if resume['jobtitle'] %}
+                <div class="main-jobtitle">{{ resume['jobtitle'] }}</div>
+            {% endif %}
+            <hr class="main-rule">
 
-      <!-- Right content -->
-      <div class="doc-content">
-        <div class="doc-headline">
-          <h1 id="docName">{{ resume['name'] }}</h1>
-          <p class="jobtitle" id="docJobTitle">{{ resume['jobtitle'] }}</p>
-        </div>
+            {% if resume['skills'] %}
+            <div class="section">
+                <div class="section-title">Core Skills</div>
+                <hr class="section-rule">
+                <div class="skills-wrap">
+                    {% for skill in resume['skills'].split(',') %}
+                        {% set s = skill.strip() %}
+                        {% if s %}
+                            <span class="skill-chip">{{ s }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
-        <div class="doc-section">
-          <p class="doc-sec-title">Professional Summary</p>
-          <div class="doc-body" id="docObjective">{{ resume['objective'] }}</div>
-        </div>
+            {% if resume['experience'] %}
+            <div class="section">
+                <div class="section-title">Work Experience</div>
+                <hr class="section-rule">
+                <p class="section-text">{{ resume['experience'] }}</p>
+            </div>
+            {% endif %}
 
-        <div class="doc-section">
-          <p class="doc-sec-title">Core Skills</p>
-          <div class="skills-wrap" id="docSkills">
-            <!-- chips rendered by JS -->
-          </div>
-        </div>
+            {% if resume['education'] %}
+            <div class="section">
+                <div class="section-title">Education</div>
+                <hr class="section-rule">
+                <p class="section-text">{{ resume['education'] }}</p>
+            </div>
+            {% endif %}
 
-        <div class="doc-section">
-          <p class="doc-sec-title">Experience</p>
-          <div class="doc-body" id="docExperience">{{ resume['experience'] }}</div>
         </div>
-
-        <div class="doc-section">
-          <p class="doc-sec-title">Education</p>
-          <div class="doc-body" id="docEducation">{{ resume['education'] }}</div>
-        </div>
-      </div>
     </div>
-  </div>
-</main>
-
-<!-- Loading overlay -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-spinner"></div>
-  <p class="loading-text">Generating your PDF…</p>
 </div>
 
 <script>
-  // ─── Populate from Jinja template data or localStorage fallback ───
-  function nl2br(str) {
-    return (str || '').replace(/\n/g, '<br>');
-  }
-
-  function populateFromData(data) {
-    if (!data) return;
-
-    // Name
-    const name = data.name || '{{ resume["name"] }}';
-    const jobtitle = data.jobtitle || '{{ resume["jobtitle"] }}';
-    document.getElementById('docName').textContent = name;
-    document.getElementById('docNameSide').textContent = name;
-    document.getElementById('docJobTitle').textContent = jobtitle;
-    document.getElementById('docTitleSide').textContent = jobtitle;
-
-    // Contact
-    document.getElementById('docContact').innerHTML =
-      `📧 ${data.email || '{{ resume["email"] }}'}<br>
-       📱 ${data.phone || '{{ resume["phone"] }}'}<br>
-       📍 ${data.location || '{{ resume["location"] }}'}<br>
-       🔗 ${data.linkedin || '{{ resume["linkedin"] }}'}`;
-
-    // Objective
-    const obj = data.objective || '{{ resume["objective"] }}';
-    document.getElementById('docObjective').innerHTML = nl2br(obj);
-    document.getElementById('docObjectiveSide').innerHTML = nl2br(obj);
-
-    // Skills → chips
-    const skillsEl = document.getElementById('docSkills');
-    const skillsRaw = data.skills || '{{ resume["skills"] }}';
-    skillsEl.innerHTML = skillsRaw.split(',').map(s => s.trim()).filter(Boolean)
-      .map(s => `<span class="skill-chip">${s}</span>`).join('');
-
-    // Experience & Education
-    document.getElementById('docExperience').innerHTML = nl2br(data.experience || '{{ resume["experience"] }}');
-    document.getElementById('docEducation').innerHTML = nl2br(data.education || '{{ resume["education"] }}');
-  }
-
-  // Try to load from Flask template first, fallback to localStorage
-  const flaskName = '{{ resume["name"] }}';
-  if (flaskName && flaskName !== '{{ resume["name"] }}') {
-    // Real Flask data present — do nothing, HTML is already populated
-    // Still render skills as chips
-    const skillsRaw = '{{ resume["skills"] }}';
-    const skillsEl = document.getElementById('docSkills');
-    skillsEl.innerHTML = skillsRaw.split(',').map(s => s.trim()).filter(Boolean)
-      .map(s => `<span class="skill-chip">${s}</span>`).join('');
-
-    // Photo is rendered server-side via Jinja in the HTML — no JS needed
-  } else {
-    // Fallback: populate from localStorage draft
-    const draft = JSON.parse(localStorage.getItem('resumeDraft') || '{}');
-    if (draft && Object.keys(draft).length) {
-      populateFromData(draft);
-    }
-  }
-
-  // ─── PDF Download ───
-  async function downloadPDF() {
-    const btn = document.getElementById('downloadBtn');
-    const overlay = document.getElementById('loadingOverlay');
-
-    btn.disabled = true;
-    overlay.classList.add('show');
-
-    const element = document.getElementById('resumeDoc');
-
-    const opt = {
-      margin: 0,
-      filename: 'resume.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        letterRendering: true
-      },
-      jsPDF: {
-        unit: 'px',
-        format: [794, 1123],
-        orientation: 'portrait'
-      }
-    };
-
-    try {
-      await html2pdf().set(opt).from(element).save();
-    } catch (e) {
-      console.error('PDF error:', e);
-    }
-
-    overlay.classList.remove('show');
-    btn.disabled = false;
-  }
+    // Show loading state AFTER navigation fires (delay so href is not blocked)
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+        const btn = this;
+        setTimeout(() => {
+            btn.textContent = '⏳ Generating...';
+            btn.classList.add('loading');
+            // Re-enable after 5s so user can download again
+            setTimeout(() => {
+                btn.innerHTML = '⬇ Download PDF';
+                btn.classList.remove('loading');
+            }, 5000);
+        }, 100);
+    });
 </script>
+
 </body>
 </html>

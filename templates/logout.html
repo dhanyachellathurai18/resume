@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Logged Out — ResumeAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: #0e0c0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 64px 56px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 4px;
+    max-width: 440px;
+    width: 90%;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 28px;
+    border: 1.5px solid rgba(201,168,76,0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c9a84c;
+    font-size: 26px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #f5f0e8;
+    letter-spacing: -0.5px;
+    margin-bottom: 14px;
+  }
+
+  p {
+    color: #9a8f82;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 13px 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  .btn-gold {
+    background: #c9a84c;
+    color: #1a1410;
+    border: 1.5px solid #c9a84c;
+  }
+  .btn-gold:hover {
+    background: #dbbf6a;
+    border-color: #dbbf6a;
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: #9a8f82;
+    border: 1.5px solid rgba(154,143,130,0.3);
+  }
+  .btn-ghost:hover {
+    color: #f5f0e8;
+    border-color: rgba(245,240,232,0.4);
+    transform: translateY(-1px);
+  }
+
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #c9a84c, transparent);
+    margin: 0 auto 32px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">✦</div>
+  <h1>You're signed out</h1>
+  <div class="divider"></div>
+  <p>Your session has ended safely.<br>Your resumes and versions are waiting for you.</p>
+  <div class="btn-row">
+    <a href="/login" class="btn btn-gold">Sign back in</a>
+    <a href="/register" class="btn btn-ghost">Create account</a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Resume Builder</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; height: 100vh;
+           background: #f5f0e8; margin: 0; }
+    h1 { color: #1a1410; }
+    .msg { color: green; margin-bottom: 16px; }
+    a.btn { background: #c9a84c; color: white; padding: 12px 28px;
+            border-radius: 6px; text-decoration: none; font-weight: bold; margin: 6px; }
+    a.btn.sec { background: #1a1410; }
+  </style>
+</head>
+<body>
+  {% if logged_out %}
+  <p class="msg">✅ You have been logged out successfully.</p>
+  {% endif %}
+  <h1>Resume Builder</h1>
+  <p>Create professional resumes in minutes.</p>
+  <div>
+    <a class="btn" href="/login">Login</a>
+    <a class="btn sec" href="/register">Register</a>
+  </div>
+</body>
+</html>
